@@ -1,0 +1,9 @@
+# Add this block to your existing Caddy config and keep 443/8443 on Caddy.
+# The service itself listens on 127.0.0.1:8097 or another free internal port.
+#
+# notify.example.com {
+#     reverse_proxy 127.0.0.1:8097
+# }
+#
+# Remnawave WEBHOOK_URL should then be:
+# https://notify.example.com/webhooks/remnawave

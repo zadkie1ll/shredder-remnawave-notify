@@ -1,0 +1,29 @@
+services:
+  remnawave-webhook-notify:
+    container_name: remnawave-webhook-notify
+    restart: unless-stopped
+    network_mode: host
+    image: remnawave-webhook-notify:v0.1
+    env_file:
+      - .env
+    environment:
+      REMNA_WEBHOOK_HOST: 127.0.0.1
+      REMNA_WEBHOOK_PORT: 8097
+    build:
+      context: .
+      dockerfile: Dockerfile
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:$${REMNA_WEBHOOK_PORT:-8097}/ready || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
