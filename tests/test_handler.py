@@ -34,6 +34,7 @@ def settings():
         vpn_queue="vpn",
         vps_queue="vps",
         service_name="monkey-island-vpn-bot",
+        notify_not_connected_type="nc-yesterday-created",
         notify_48h_type=None,
         notify_expired_24h_type=None,
     )
@@ -94,6 +95,16 @@ async def test_expired_event_publishes_subscription_expired(settings):
     result = await handler.handle(webhook("user.expired"))
 
     assert result.notification_type == "subscription-expired"
+
+
+@pytest.mark.asyncio
+async def test_not_connected_event_publishes_nc_yesterday_created(settings):
+    publisher = FakePublisher()
+    handler = RemnawaveWebhookHandler(settings, publisher)
+
+    result = await handler.handle(webhook("user.not_connected"))
+
+    assert result.notification_type == "nc-yesterday-created"
 
 
 @pytest.mark.asyncio

@@ -38,6 +38,7 @@ class Settings:
     vpn_queue: str
     vps_queue: str
     service_name: str
+    notify_not_connected_type: str
     notify_48h_type: str | None
     notify_expired_24h_type: str | None
 
@@ -81,6 +82,9 @@ class Settings:
             vpn_queue=os.getenv("REMNA_VPN_BOT_QUEUE", "monkey-island-vpn-bot"),
             vps_queue=os.getenv("REMNA_VPS_BOT_QUEUE", "monkey-island-vps-bot"),
             service_name=os.getenv("REMNA_MESSAGE_SERVICE", "monkey-island-vpn-bot"),
+            notify_not_connected_type=os.getenv(
+                "REMNA_NOTIFY_NOT_CONNECTED_TYPE", "nc-yesterday-created"
+            ),
             notify_48h_type=_get_optional_str("REMNA_NOTIFY_48H_TYPE"),
             notify_expired_24h_type=_get_optional_str("REMNA_NOTIFY_EXPIRED_24H_TYPE"),
         )

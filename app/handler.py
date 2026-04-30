@@ -63,6 +63,7 @@ class RemnawaveWebhookHandler:
             "user.expires_in_72_hours": "3-days-left",
             "user.expires_in_24_hours": "1-day-left",
             "user.expired": "subscription-expired",
+            "user.not_connected": self._settings.notify_not_connected_type,
             "user.expires_in_48_hours": self._settings.notify_48h_type,
             "user.expired_24_hours_ago": self._settings.notify_expired_24h_type,
         }

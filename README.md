@@ -12,6 +12,7 @@ pushes the JSON message into Redis.
 | `user.expires_in_72_hours` | `3-days-left` | sent |
 | `user.expires_in_24_hours` | `1-day-left` | sent |
 | `user.expired` | `subscription-expired` | sent |
+| `user.not_connected` | `REMNA_NOTIFY_NOT_CONNECTED_TYPE` | `nc-yesterday-created` |
 | `user.expires_in_48_hours` | `REMNA_NOTIFY_48H_TYPE` | ignored |
 | `user.expired_24_hours_ago` | `REMNA_NOTIFY_EXPIRED_24H_TYPE` | ignored |
 
