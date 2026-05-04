@@ -37,6 +37,12 @@ class RemnawaveWebhookHandler:
         try:
             user = RemnawaveUser.model_validate(webhook.data)
         except ValidationError as exc:
+            self._logger.warning(
+                "invalid user payload for event=%s data=%s errors=%s",
+                webhook.event,
+                webhook.data,
+                exc.errors(),
+            )
             raise WebhookIgnored("user payload is invalid") from exc
 
         telegram_id = self._extract_telegram_id(user)
