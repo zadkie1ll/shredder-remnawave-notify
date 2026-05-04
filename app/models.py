@@ -11,8 +11,8 @@ class RemnawaveUser(BaseModel):
 
     uuid: str | None = None
     subscription_uuid: str | None = Field(default=None, alias="subscriptionUuid")
-    username: str | None = None
-    telegram_id: str | None = Field(default=None, alias="telegramId")
+    username: str | int | None = None
+    telegram_id: str | int | None = Field(default=None, alias="telegramId")
     expire_at: datetime | None = Field(default=None, alias="expireAt")
     email: str | None = None
 
