@@ -27,19 +27,18 @@ The service pushes the same shape the old module used:
 {"service":"monkey-island-vpn-bot","type":"notificate-user","notification_type":"1-day-left","telegram_id":123456789}
 ```
 
-By default the message is pushed to both queues:
+By default the message is pushed only to the VPN bot queue:
 
 ```text
 monkey-island-vpn-bot
-monkey-island-vps-bot
 ```
 
 ## Idempotency
 
 Remnawave may retry webhooks. The service writes through a Redis Lua script:
-it sets a dedupe key and pushes to both bot queues atomically. The key includes
-event, Telegram ID and `expireAt`, so the same user can be notified again after
-a future renewal creates a new expiration date.
+it sets a dedupe key and pushes to the VPN bot queue atomically. The key
+includes event, Telegram ID and `expireAt`, so the same user can be notified
+again after a future renewal creates a new expiration date.
 
 Default dedupe TTL is 45 days: `REMNA_DEDUPE_TTL_SECONDS=3888000`.
 

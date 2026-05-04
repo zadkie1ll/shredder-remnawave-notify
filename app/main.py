@@ -38,7 +38,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         publisher = RedisNotificationPublisher(
             redis=redis,
-            queues=[settings.vpn_queue, settings.vps_queue],
+            queues=[settings.vpn_queue],
             dedupe_ttl_seconds=settings.dedupe_ttl_seconds,
         )
         app.state.settings = settings

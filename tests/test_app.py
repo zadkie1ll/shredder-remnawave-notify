@@ -34,7 +34,6 @@ def settings() -> Settings:
         redis_key_prefix="test-prefix",
         dedupe_ttl_seconds=60,
         vpn_queue="vpn",
-        vps_queue="vps",
         service_name="monkey-island-vpn-bot",
         notify_not_connected_type="nc-yesterday-created",
         notify_48h_type=None,
@@ -76,6 +75,36 @@ def test_webhook_endpoint_publishes_message(monkeypatch):
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert publisher.calls[0][1].notification_type == "subscription-expired"
+
+
+def test_app_publisher_uses_only_vpn_queue(monkeypatch):
+    captured = {}
+
+    class FakeRedis:
+        def __init__(self, **kwargs):
+            captured["redis_kwargs"] = kwargs
+
+        async def aclose(self):
+            captured["closed"] = True
+
+    class CapturingPublisher(FakePublisher):
+        def __init__(self, redis, queues, dedupe_ttl_seconds):
+            super().__init__()
+            captured["redis"] = redis
+            captured["queues"] = queues
+            captured["dedupe_ttl_seconds"] = dedupe_ttl_seconds
+
+    monkeypatch.setattr("app.main.Redis", FakeRedis)
+    monkeypatch.setattr("app.main.RedisNotificationPublisher", CapturingPublisher)
+
+    app = create_app(settings())
+
+    with TestClient(app) as client:
+        response = client.get("/health")
+
+    assert response.status_code == 200
+    assert captured["queues"] == ["vpn"]
+    assert captured["closed"] is True
 
 
 def test_webhook_endpoint_rejects_bad_signature():
