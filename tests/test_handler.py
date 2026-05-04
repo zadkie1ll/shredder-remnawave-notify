@@ -32,7 +32,6 @@ def settings():
         redis_key_prefix="test-prefix",
         dedupe_ttl_seconds=60,
         vpn_queue="vpn",
-        service_name="monkey-island-vpn-bot",
         notify_not_connected_type="nc-yesterday-created",
         notify_48h_type=None,
         notify_expired_24h_type="subscription-expired",
@@ -65,7 +64,6 @@ async def test_72h_event_publishes_3_days_left(settings):
     assert result.published is True
     assert result.notification_type == "3-days-left"
     assert publisher.calls[0][1].model_dump() == {
-        "service": "monkey-island-vpn-bot",
         "type": "notificate-user",
         "notification_type": "3-days-left",
         "telegram_id": 123456,

@@ -27,7 +27,6 @@ class RemnawaveWebhook(BaseModel):
 
 
 class NotificationMessage(BaseModel):
-    service: str
     type: Literal["notificate-user"] = "notificate-user"
     notification_type: str
     telegram_id: int

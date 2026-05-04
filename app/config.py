@@ -43,7 +43,6 @@ class Settings:
     redis_key_prefix: str
     dedupe_ttl_seconds: int
     vpn_queue: str
-    service_name: str
     notify_not_connected_type: str
     notify_48h_type: str | None
     notify_expired_24h_type: str
@@ -54,20 +53,13 @@ class Settings:
         if not webhook_secret:
             raise ValueError("REMNA_WEBHOOK_SECRET environment variable is not set.")
 
-        redis_host = os.getenv("REMNA_REDIS_HOST") or os.getenv("MI_UN_REDIS_HOST")
+        redis_host = os.getenv("REMNA_REDIS_HOST")
         if not redis_host:
-            raise ValueError(
-                "REMNA_REDIS_HOST or MI_UN_REDIS_HOST environment variable is not set."
-            )
+            raise ValueError("REMNA_REDIS_HOST environment variable is not set.")
 
-        redis_port = _get_int(
-            "REMNA_REDIS_PORT",
-            _get_int("MI_UN_REDIS_PORT", 6379),
-        )
+        redis_port = _get_int("REMNA_REDIS_PORT", 6379)
 
         redis_password = _get_optional_str("REMNA_REDIS_PASSWORD")
-        if redis_password is None:
-            redis_password = _get_optional_str("MI_UN_REDIS_PASSWORD")
 
         return cls(
             host=os.getenv("REMNA_WEBHOOK_HOST", "0.0.0.0"),
@@ -85,8 +77,7 @@ class Settings:
                 "REMNA_REDIS_KEY_PREFIX", "remnawave-webhook-notify"
             ),
             dedupe_ttl_seconds=_get_int("REMNA_DEDUPE_TTL_SECONDS", 60 * 60 * 24 * 45),
-            vpn_queue=os.getenv("REMNA_VPN_BOT_QUEUE", "monkey-island-vpn-bot"),
-            service_name=os.getenv("REMNA_MESSAGE_SERVICE", "monkey-island-vpn-bot"),
+            vpn_queue=os.getenv("REMNA_VPN_BOT_QUEUE", "shredder-vpn-bot"),
             notify_not_connected_type=os.getenv(
                 "REMNA_NOTIFY_NOT_CONNECTED_TYPE", "nc-yesterday-created"
             ),

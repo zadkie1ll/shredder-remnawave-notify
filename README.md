@@ -21,16 +21,16 @@ by `shredder-vpn-bot`.
 
 ## Redis message contract
 
-The service pushes the same shape the old module used:
+The service pushes the bot notification message into the configured Redis queue:
 
 ```json
-{"service":"monkey-island-vpn-bot","type":"notificate-user","notification_type":"1-day-left","telegram_id":123456789}
+{"type":"notificate-user","notification_type":"1-day-left","telegram_id":123456789}
 ```
 
 By default the message is pushed only to the VPN bot queue:
 
 ```text
-monkey-island-vpn-bot
+shredder-vpn-bot
 ```
 
 ## Idempotency

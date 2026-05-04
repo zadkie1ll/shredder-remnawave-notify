@@ -50,7 +50,6 @@ class RemnawaveWebhookHandler:
             raise WebhookIgnored("telegram id is missing")
 
         message = NotificationMessage(
-            service=self._settings.service_name,
             notification_type=notification_type,
             telegram_id=telegram_id,
         )

@@ -34,7 +34,6 @@ def settings() -> Settings:
         redis_key_prefix="test-prefix",
         dedupe_ttl_seconds=60,
         vpn_queue="vpn",
-        service_name="monkey-island-vpn-bot",
         notify_not_connected_type="nc-yesterday-created",
         notify_48h_type=None,
         notify_expired_24h_type="subscription-expired",
