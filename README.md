@@ -14,10 +14,10 @@ pushes the JSON message into Redis.
 | `user.expired` | `subscription-expired` | sent |
 | `user.not_connected` | `REMNA_NOTIFY_NOT_CONNECTED_TYPE` | `nc-yesterday-created` |
 | `user.expires_in_48_hours` | `REMNA_NOTIFY_48H_TYPE` | ignored |
-| `user.expired_24_hours_ago` | `REMNA_NOTIFY_EXPIRED_24H_TYPE` | ignored |
+| `user.expired_24_hours_ago` | `REMNA_NOTIFY_EXPIRED_24H_TYPE` | `subscription-expired` |
 
-The 48 hour and expired-after-24-hours webhooks are ignored by default because
-the current bot contract only has known templates for 3 days, 1 day and expired.
+The default mapping only sends notification types that are currently supported
+by `shredder-vpn-bot`.
 
 ## Redis message contract
 

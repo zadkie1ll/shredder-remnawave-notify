@@ -38,7 +38,7 @@ def settings() -> Settings:
         service_name="monkey-island-vpn-bot",
         notify_not_connected_type="nc-yesterday-created",
         notify_48h_type=None,
-        notify_expired_24h_type=None,
+        notify_expired_24h_type="subscription-expired",
     )
 
 

@@ -22,6 +22,13 @@ def _get_optional_str(name: str) -> str | None:
     return value
 
 
+def _get_str(name: str, default: str) -> str:
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
     host: str
@@ -40,7 +47,7 @@ class Settings:
     service_name: str
     notify_not_connected_type: str
     notify_48h_type: str | None
-    notify_expired_24h_type: str | None
+    notify_expired_24h_type: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -86,5 +93,7 @@ class Settings:
                 "REMNA_NOTIFY_NOT_CONNECTED_TYPE", "nc-yesterday-created"
             ),
             notify_48h_type=_get_optional_str("REMNA_NOTIFY_48H_TYPE"),
-            notify_expired_24h_type=_get_optional_str("REMNA_NOTIFY_EXPIRED_24H_TYPE"),
+            notify_expired_24h_type=_get_str(
+                "REMNA_NOTIFY_EXPIRED_24H_TYPE", "subscription-expired"
+            ),
         )

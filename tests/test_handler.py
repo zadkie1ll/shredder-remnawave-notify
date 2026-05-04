@@ -36,7 +36,7 @@ def settings():
         service_name="monkey-island-vpn-bot",
         notify_not_connected_type="nc-yesterday-created",
         notify_48h_type=None,
-        notify_expired_24h_type=None,
+        notify_expired_24h_type="subscription-expired",
     )
 
 
@@ -98,6 +98,16 @@ async def test_expired_event_publishes_subscription_expired(settings):
 
 
 @pytest.mark.asyncio
+async def test_expired_24h_ago_event_publishes_subscription_expired(settings):
+    publisher = FakePublisher()
+    handler = RemnawaveWebhookHandler(settings, publisher)
+
+    result = await handler.handle(webhook("user.expired_24_hours_ago"))
+
+    assert result.notification_type == "subscription-expired"
+
+
+@pytest.mark.asyncio
 async def test_not_connected_event_publishes_nc_yesterday_created(settings):
     publisher = FakePublisher()
     handler = RemnawaveWebhookHandler(settings, publisher)
@@ -116,14 +126,14 @@ async def test_48h_event_is_ignored_by_default(settings):
 
 
 @pytest.mark.asyncio
-async def test_48h_event_can_be_enabled(settings):
-    settings = replace(settings, notify_48h_type="2-days-left")
+async def test_48h_event_can_be_enabled_if_bot_contract_adds_type(settings):
+    settings = replace(settings, notify_48h_type="future-supported-type")
     publisher = FakePublisher()
     handler = RemnawaveWebhookHandler(settings, publisher)
 
     result = await handler.handle(webhook("user.expires_in_48_hours"))
 
-    assert result.notification_type == "2-days-left"
+    assert result.notification_type == "future-supported-type"
 
 
 @pytest.mark.asyncio
