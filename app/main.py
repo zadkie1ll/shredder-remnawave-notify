@@ -45,14 +45,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             dedupe_ttl_seconds=settings.dedupe_ttl_seconds,
         )
         traffic_engine = None
+        session_maker = None
         rwms_client = None
         traffic_task = None
 
-        if settings.traffic_watcher_enabled:
+        if settings.has_postgres_settings():
             from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-
-            from app.rwms_client import RwmsClient
-            from app.traffic_watcher import TrafficProgressWatcher
 
             db_url = (
                 f"postgresql+asyncpg://{settings.pg_user}:{settings.pg_password}"
@@ -69,13 +67,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 bind=traffic_engine,
                 expire_on_commit=False,
             )
+
+        conversion_publisher = RedisConversionPublisher(
+            redis=redis,
+            queue=settings.ym_stat_queue,
+        )
+
+        if session_maker is not None:
+            from app.first_connection_recorder import FirstConnectionRecorder
+
+            app.state.first_connection_recorder = FirstConnectionRecorder(
+                session_maker=session_maker,
+                conversion_publisher=conversion_publisher,
+            )
+        else:
+            app.state.first_connection_recorder = None
+
+        if settings.traffic_watcher_enabled:
+            from app.rwms_client import RwmsClient
+            from app.traffic_watcher import TrafficProgressWatcher
+
             rwms_client = RwmsClient(
                 addr=settings.rwms_address,
                 port=settings.rwms_port,
-            )
-            conversion_publisher = RedisConversionPublisher(
-                redis=redis,
-                queue=settings.ym_stat_queue,
             )
             bot_publisher = RedisBotPublisher(redis=redis, queue=settings.vpn_queue)
             traffic_watcher = TrafficProgressWatcher(
@@ -171,6 +185,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="webhook timestamp is outside tolerance",
             )
+
+        if webhook.scope == "user" and webhook.event == "user.first_connected":
+            recorder = request.app.state.first_connection_recorder
+            if recorder is None:
+                logging.getLogger("webhook").info(
+                    "ignored webhook: first connection recorder is disabled"
+                )
+                return {
+                    "status": "ignored",
+                    "reason": "first connection recorder is disabled",
+                }
+
+            from app.models import RemnawaveUser
+
+            try:
+                user = RemnawaveUser.model_validate(webhook.data)
+            except ValidationError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="invalid first_connected user payload",
+                ) from exc
+
+            result = await recorder.record(user)
+            return {"status": "ok", **result.model_dump()}
 
         try:
             result = await request.app.state.handler.handle(webhook)

@@ -22,6 +22,22 @@ def _get_optional_str(name: str) -> str | None:
     return value
 
 
+def _get_first_optional_str(*names: str) -> str | None:
+    for name in names:
+        value = _get_optional_str(name)
+        if value is not None:
+            return value
+    return None
+
+
+def _get_first_int(default: int, *names: str) -> int:
+    for name in names:
+        value = os.getenv(name)
+        if value not in (None, ""):
+            return _get_int(name, default)
+    return default
+
+
 def _get_bool(name: str, default: bool = False) -> bool:
     value = os.getenv(name)
     if value is None or value == "":
@@ -106,18 +122,39 @@ class Settings:
             traffic_watcher_interval_seconds=_get_int(
                 "REMNA_TRAFFIC_WATCHER_INTERVAL_SECONDS", 900
             ),
-            rwms_address=_get_optional_str("REMNA_RWMS_ADDR"),
+            rwms_address=_get_first_optional_str("REMNA_RWMS_ADDR", "MI_UN_RWMS_ADDR"),
             rwms_port=(
-                _get_int("REMNA_RWMS_PORT", 0)
-                if _get_optional_str("REMNA_RWMS_PORT") is not None
+                _get_first_int(0, "REMNA_RWMS_PORT", "MI_UN_RWMS_PORT")
+                if _get_first_optional_str("REMNA_RWMS_PORT", "MI_UN_RWMS_PORT")
+                is not None
                 else None
             ),
-            pg_host=_get_optional_str("REMNA_POSTGRES_HOST"),
-            pg_port=_get_int("REMNA_POSTGRES_PORT", 5432),
-            pg_user=_get_optional_str("REMNA_POSTGRES_USER"),
-            pg_password=_get_optional_str("REMNA_POSTGRES_PASSWORD"),
-            pg_db=_get_optional_str("REMNA_POSTGRES_DB"),
-            ym_stat_queue=_get_str("REMNA_YM_STAT_QUEUE", "monkey-island-ym-stat"),
+            pg_host=_get_first_optional_str(
+                "REMNA_POSTGRES_HOST", "MI_UN_POSTGRES_HOST"
+            ),
+            pg_port=_get_first_int(5432, "REMNA_POSTGRES_PORT", "MI_UN_POSTGRES_PORT"),
+            pg_user=_get_first_optional_str(
+                "REMNA_POSTGRES_USER", "MI_UN_POSTGRES_USER"
+            ),
+            pg_password=_get_first_optional_str(
+                "REMNA_POSTGRES_PASSWORD", "MI_UN_POSTGRES_PASSWORD"
+            ),
+            pg_db=_get_first_optional_str("REMNA_POSTGRES_DB", "MI_UN_POSTGRES_DB"),
+            ym_stat_queue=_get_str(
+                "REMNA_YM_STAT_QUEUE",
+                os.getenv("MI_UN_YM_STAT_QUEUE_NAME", "monkey-island-ym-stat"),
+            ),
+        )
+
+    def has_postgres_settings(self) -> bool:
+        return all(
+            value not in (None, "")
+            for value in (
+                self.pg_host,
+                self.pg_user,
+                self.pg_password,
+                self.pg_db,
+            )
         )
 
     def require_traffic_watcher_settings(self) -> None:
