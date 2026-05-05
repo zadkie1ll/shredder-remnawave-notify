@@ -13,5 +13,6 @@ RUN python -m pip install --upgrade pip setuptools && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
+COPY proto ./proto
 
 CMD ["python", "-m", "app.main"]

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
+import asyncio
 from contextlib import asynccontextmanager
+from contextlib import suppress
 from typing import Any
 
 from fastapi import FastAPI, Header, HTTPException, Request, status
@@ -12,7 +14,7 @@ from redis.asyncio import Redis
 from app.config import Settings
 from app.handler import RemnawaveWebhookHandler, WebhookIgnored
 from app.models import RemnawaveWebhook
-from app.publisher import RedisNotificationPublisher
+from app.publisher import RedisBotPublisher, RedisConversionPublisher, RedisNotificationPublisher
 from app.security import verify_signature, verify_timestamp
 
 
@@ -29,6 +31,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        settings.require_traffic_watcher_settings()
         redis = Redis(
             host=settings.redis_host,
             port=settings.redis_port,
@@ -41,6 +44,52 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             queues=[settings.vpn_queue],
             dedupe_ttl_seconds=settings.dedupe_ttl_seconds,
         )
+        traffic_engine = None
+        rwms_client = None
+        traffic_task = None
+
+        if settings.traffic_watcher_enabled:
+            from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+            from app.rwms_client import RwmsClient
+            from app.traffic_watcher import TrafficProgressWatcher
+
+            db_url = (
+                f"postgresql+asyncpg://{settings.pg_user}:{settings.pg_password}"
+                f"@{settings.pg_host}:{settings.pg_port}/{settings.pg_db}"
+            )
+            traffic_engine = create_async_engine(
+                db_url,
+                pool_size=5,
+                max_overflow=10,
+                pool_pre_ping=True,
+                pool_recycle=3600,
+            )
+            session_maker = async_sessionmaker(
+                bind=traffic_engine,
+                expire_on_commit=False,
+            )
+            rwms_client = RwmsClient(
+                addr=settings.rwms_address,
+                port=settings.rwms_port,
+            )
+            conversion_publisher = RedisConversionPublisher(
+                redis=redis,
+                queue=settings.ym_stat_queue,
+            )
+            bot_publisher = RedisBotPublisher(redis=redis, queue=settings.vpn_queue)
+            traffic_watcher = TrafficProgressWatcher(
+                session_maker=session_maker,
+                rwms_client=rwms_client,
+                conversion_publisher=conversion_publisher,
+                bot_publisher=bot_publisher,
+            )
+            traffic_task = asyncio.create_task(
+                traffic_watcher.run_forever(
+                    interval_seconds=settings.traffic_watcher_interval_seconds
+                )
+            )
+
         app.state.settings = settings
         app.state.redis = redis
         app.state.publisher = publisher
@@ -56,6 +105,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
+            if traffic_task is not None:
+                traffic_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await traffic_task
+            if rwms_client is not None:
+                await rwms_client.close()
+            if traffic_engine is not None:
+                await traffic_engine.dispose()
             await redis.aclose()
 
     app = FastAPI(

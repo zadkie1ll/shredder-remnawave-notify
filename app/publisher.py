@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 from redis.asyncio import Redis
 
+from app.messages import ReferralReachedTrafficBonusApplied, SendConversionMessage
 from app.models import NotificationMessage
 
 
@@ -65,3 +66,50 @@ class RedisNotificationPublisher:
 
     async def ping(self) -> bool:
         return bool(await self._redis.ping())
+
+
+class RedisConversionPublisher:
+    def __init__(self, redis: Redis, queue: str) -> None:
+        self._redis = redis
+        self._queue = queue
+        self._logger = logging.getLogger(self.__class__.__name__)
+
+    async def publish_conversion(self, message: SendConversionMessage) -> None:
+        payload = json.dumps(
+            message.model_dump(mode="json"),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        queue_size = await self._redis.rpush(self._queue, payload)
+        self._logger.info(
+            "published conversion event=%s client_id=%s queue=%s queue_size=%s",
+            message.event.value,
+            message.client_id,
+            self._queue,
+            queue_size,
+        )
+
+
+class RedisBotPublisher:
+    def __init__(self, redis: Redis, queue: str) -> None:
+        self._redis = redis
+        self._queue = queue
+        self._logger = logging.getLogger(self.__class__.__name__)
+
+    async def publish_referral_traffic_bonus(
+        self,
+        message: ReferralReachedTrafficBonusApplied,
+    ) -> None:
+        payload = json.dumps(
+            message.model_dump(mode="json"),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        queue_size = await self._redis.rpush(self._queue, payload)
+        self._logger.info(
+            "published referral traffic bonus telegram_id=%s count=%s queue=%s queue_size=%s",
+            message.telegram_id,
+            message.referral_reached_traffic_count,
+            self._queue,
+            queue_size,
+        )

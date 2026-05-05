@@ -22,6 +22,13 @@ def _get_optional_str(name: str) -> str | None:
     return value
 
 
+def _get_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None or value == "":
+        return default
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
 def _get_str(name: str, default: str) -> str:
     value = os.getenv(name)
     if value is None or value == "":
@@ -46,6 +53,16 @@ class Settings:
     notify_not_connected_type: str
     notify_48h_type: str | None
     notify_expired_24h_type: str
+    traffic_watcher_enabled: bool = False
+    traffic_watcher_interval_seconds: int = 900
+    rwms_address: str | None = None
+    rwms_port: int | None = None
+    pg_host: str | None = None
+    pg_port: int = 5432
+    pg_user: str | None = None
+    pg_password: str | None = None
+    pg_db: str | None = None
+    ym_stat_queue: str = "monkey-island-ym-stat"
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -85,4 +102,42 @@ class Settings:
             notify_expired_24h_type=_get_str(
                 "REMNA_NOTIFY_EXPIRED_24H_TYPE", "subscription-expired"
             ),
+            traffic_watcher_enabled=_get_bool("REMNA_TRAFFIC_WATCHER_ENABLED"),
+            traffic_watcher_interval_seconds=_get_int(
+                "REMNA_TRAFFIC_WATCHER_INTERVAL_SECONDS", 900
+            ),
+            rwms_address=_get_optional_str("REMNA_RWMS_ADDR"),
+            rwms_port=(
+                _get_int("REMNA_RWMS_PORT", 0)
+                if _get_optional_str("REMNA_RWMS_PORT") is not None
+                else None
+            ),
+            pg_host=_get_optional_str("REMNA_POSTGRES_HOST"),
+            pg_port=_get_int("REMNA_POSTGRES_PORT", 5432),
+            pg_user=_get_optional_str("REMNA_POSTGRES_USER"),
+            pg_password=_get_optional_str("REMNA_POSTGRES_PASSWORD"),
+            pg_db=_get_optional_str("REMNA_POSTGRES_DB"),
+            ym_stat_queue=_get_str("REMNA_YM_STAT_QUEUE", "monkey-island-ym-stat"),
         )
+
+    def require_traffic_watcher_settings(self) -> None:
+        if not self.traffic_watcher_enabled:
+            return
+
+        missing = [
+            name
+            for name, value in {
+                "REMNA_RWMS_ADDR": self.rwms_address,
+                "REMNA_RWMS_PORT": self.rwms_port,
+                "REMNA_POSTGRES_HOST": self.pg_host,
+                "REMNA_POSTGRES_USER": self.pg_user,
+                "REMNA_POSTGRES_PASSWORD": self.pg_password,
+                "REMNA_POSTGRES_DB": self.pg_db,
+            }.items()
+            if value in (None, "", 0)
+        ]
+        if missing:
+            raise ValueError(
+                "Traffic watcher is enabled, but required environment variables are missing: "
+                + ", ".join(missing)
+            )
