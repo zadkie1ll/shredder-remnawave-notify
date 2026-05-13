@@ -105,3 +105,22 @@ POST /webhooks/remnawave
 ```
 
 `/ready` checks Redis connectivity.
+
+## Traffic Watcher
+
+Referral traffic bonuses are applied by the optional traffic watcher, not by the
+`/start` flow in the bot. Enable it in production with:
+
+```env
+REMNA_TRAFFIC_WATCHER_ENABLED=true
+REMNA_RWMS_ADDR=<rwms-host>
+REMNA_RWMS_PORT=<rwms-port>
+REMNA_POSTGRES_HOST=<postgres-host>
+REMNA_POSTGRES_USER=<postgres-user>
+REMNA_POSTGRES_PASSWORD=<postgres-password>
+REMNA_POSTGRES_DB=<postgres-db>
+```
+
+When a referred user crosses 100MB of lifetime traffic, the watcher extends the
+referrer's subscription in RWMS first, then records the bonus in Postgres and
+notifies the bot.

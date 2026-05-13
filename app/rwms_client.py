@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 import grpc
+from google.protobuf.timestamp_pb2 import Timestamp
 
 import proto.rwmanager_pb2 as proto
 import proto.rwmanager_pb2_grpc as proto_grpc
@@ -50,12 +51,14 @@ class RwmsClient:
             expire_at = now
 
         expire_at = expire_at + timedelta(days=days)
+        expire_at_timestamp = Timestamp()
+        expire_at_timestamp.FromDatetime(expire_at)
 
         try:
             return await self._stub.UpdateUser(
                 proto.UpdateUserRequest(
                     uuid=user.uuid,
-                    expire_at=expire_at,
+                    expire_at=expire_at_timestamp,
                     status=proto.UserStatus.ACTIVE,
                     traffic_limit_strategy=proto.TrafficLimitStrategy.NO_RESET,
                     active_internal_squads=[
@@ -63,7 +66,7 @@ class RwmsClient:
                     ],
                 )
             )
-        except grpc.RpcError as exc:
+        except (TypeError, ValueError, grpc.RpcError) as exc:
             logging.getLogger(self.__class__.__name__).error(
                 "error extending RWMS user username=%s days=%s: %s",
                 user.username,

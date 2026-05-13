@@ -246,6 +246,25 @@ class TrafficProgressWatcher:
                 )
                 continue
 
+            bonus_days = len(referral_ids) * 10
+            rwms_update = await self._rwms_client.extend_user_subscription(
+                user=referrer_sub,
+                days=bonus_days,
+            )
+            if rwms_update is None:
+                self._log.warning(
+                    "skipped referral traffic bonus because RWMS extension failed "
+                    "referrer_username=%s bonus_days=%s",
+                    referrer_username,
+                    bonus_days,
+                )
+                continue
+
+            await extend_user_subscription_by_username(
+                session=session,
+                username=referrer_username,
+                interval=timedelta(days=bonus_days),
+            )
             for referral_id in referral_ids:
                 session.add(
                     ReferralBonus(
@@ -256,16 +275,6 @@ class TrafficProgressWatcher:
                     )
                 )
 
-            bonus_days = len(referral_ids) * 10
-            await extend_user_subscription_by_username(
-                session=session,
-                username=referrer_username,
-                interval=timedelta(days=bonus_days),
-            )
-            await self._rwms_client.extend_user_subscription(
-                user=referrer_sub,
-                days=bonus_days,
-            )
             bonus_result[referrer_tg_id] = (
                 bonus_result.get(referrer_tg_id, 0) + len(referral_ids)
             )
