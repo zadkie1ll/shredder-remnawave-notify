@@ -57,7 +57,7 @@ class RwmsClient:
         try:
             return await self._stub.UpdateUser(
                 proto.UpdateUserRequest(
-                    uuid=user.uuid,
+                    user_id=user.id,
                     expire_at=expire_at_timestamp,
                     status=proto.UserStatus.ACTIVE,
                     traffic_limit_strategy=proto.TrafficLimitStrategy.NO_RESET,

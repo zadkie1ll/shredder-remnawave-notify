@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class RemnawaveUser(BaseModel):
     model_config = ConfigDict(extra="allow")
 
+    id: int | None = None
     uuid: str | None = None
     subscription_uuid: str | None = Field(default=None, alias="subscriptionUuid")
     username: str | int | None = None

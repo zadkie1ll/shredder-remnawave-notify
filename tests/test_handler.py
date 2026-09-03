@@ -45,7 +45,7 @@ def webhook(event: str, telegram_id: str | int | None = "123456") -> RemnawaveWe
             "event": event,
             "timestamp": "2026-04-20T10:00:00Z",
             "data": {
-                "uuid": "user-uuid",
+                "id": 42,
                 "username": "fallback-username",
                 "telegramId": telegram_id,
                 "expireAt": "2026-04-21T10:00:00Z",
@@ -154,6 +154,20 @@ async def test_integer_telegram_id_is_accepted(settings):
 
     assert result.telegram_id == 8347463443
     assert publisher.calls[0][1].telegram_id == 8347463443
+
+
+@pytest.mark.asyncio
+async def test_v3_user_id_payload_is_accepted(settings):
+    publisher = FakePublisher()
+    handler = RemnawaveWebhookHandler(settings, publisher)
+
+    payload = webhook("user.expired", telegram_id=123456)
+    payload.data.pop("uuid", None)
+    payload.data["id"] = 4242
+
+    result = await handler.handle(payload)
+
+    assert result.telegram_id == 123456
 
 
 @pytest.mark.asyncio

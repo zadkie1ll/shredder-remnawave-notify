@@ -46,7 +46,7 @@ def payload(event: str = "user.expired") -> dict:
         "event": event,
         "timestamp": datetime.now(UTC).isoformat(),
         "data": {
-            "uuid": "user-uuid",
+            "id": 42,
             "username": "123",
             "telegramId": "456",
             "expireAt": "2026-04-21T10:00:00Z",
