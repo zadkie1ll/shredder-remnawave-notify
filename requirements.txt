@@ -4,5 +4,5 @@ redis==5.2.1
 pydantic==2.10.5
 sqlalchemy==2.0.41
 asyncpg==0.30.0
-grpcio==1.68.1
+grpcio>=1.82.1,<2.0.0
 protobuf>=7.35.0,<8.0.0
