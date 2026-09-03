@@ -69,8 +69,10 @@ class Settings:
     notify_not_connected_type: str
     notify_48h_type: str | None
     notify_expired_24h_type: str
+    notifications_enabled: bool = True
     traffic_watcher_enabled: bool = False
     traffic_watcher_interval_seconds: int = 900
+    referral_traffic_bonus_days: int = 7
     rwms_address: str | None = None
     rwms_port: int | None = None
     pg_host: str | None = None
@@ -118,9 +120,13 @@ class Settings:
             notify_expired_24h_type=_get_str(
                 "REMNA_NOTIFY_EXPIRED_24H_TYPE", "subscription-expired"
             ),
+            notifications_enabled=_get_bool("REMNA_NOTIFICATIONS_ENABLED", True),
             traffic_watcher_enabled=_get_bool("REMNA_TRAFFIC_WATCHER_ENABLED"),
             traffic_watcher_interval_seconds=_get_int(
                 "REMNA_TRAFFIC_WATCHER_INTERVAL_SECONDS", 900
+            ),
+            referral_traffic_bonus_days=_get_int(
+                "REMNA_REFERRAL_TRAFFIC_BONUS_DAYS", 7
             ),
             rwms_address=_get_first_optional_str("REMNA_RWMS_ADDR", "MI_UN_RWMS_ADDR"),
             rwms_port=(
